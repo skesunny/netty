@@ -73,9 +73,11 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         }
 
         if (executor == null) {
+            // 类名为名称的线程工厂
+            // 该线程池没有任何队列，提交任务后，创建任何线程类型都是 FastThreadLocalRunnable, 并且立即start。
             executor = new ThreadPerTaskExecutor(newDefaultThreadFactory());
         }
-
+        //为每个线程创建一个单例线程池
         children = new EventExecutor[nThreads];
 
         for (int i = 0; i < nThreads; i ++) {
@@ -107,7 +109,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
                 }
             }
         }
-
+        //创建线程选择器，默认是对2取余（位运算），也可以顺序获取
         chooser = chooserFactory.newChooser(children);
 
         final FutureListener<Object> terminationListener = new FutureListener<Object>() {
@@ -118,14 +120,14 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
                 }
             }
         };
-
+        //为每一个单例线程池添加一个关闭监听器
         for (EventExecutor e: children) {
             e.terminationFuture().addListener(terminationListener);
         }
 
         Set<EventExecutor> childrenSet = new LinkedHashSet<EventExecutor>(children.length);
         Collections.addAll(childrenSet, children);
-        readonlyChildren = Collections.unmodifiableSet(childrenSet);
+        readonlyChildren = Collections.unmodifiableSet(childrenSet);//将所有的单例线程池添加到一个 HashSet 中
     }
 
     protected ThreadFactory newDefaultThreadFactory() {
